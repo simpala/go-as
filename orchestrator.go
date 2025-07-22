@@ -108,3 +108,13 @@ func (o *Orchestrator) ManageMCP(config *MCPConfig) error {
 	o.logger.Info("Orchestrator: MCP connected successfully.", "alias", config.Alias)
 	return nil
 }
+
+// GetLLMServerURL returns the LLM server URL.
+func GetLLMServerURL() string {
+	return "http://localhost:8080"
+}
+
+// GetLLMTimeout returns the LLM timeout.
+func GetLLMTimeout() time.Duration {
+	return 5 * time.Second
+}

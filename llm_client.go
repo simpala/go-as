@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -20,6 +19,7 @@ type LLMClientConfig struct {
 	ServerURL string
 	ModelName string
 	Timeout   time.Duration
+	// MaxTokens removed as per user's request for debugging
 }
 
 // Message represents a message in the chat completion.
@@ -64,11 +64,11 @@ type LLMClient struct {
 
 // NewLLMClient creates a new LLMClient.
 func NewLLMClient(config *LLMClientConfig, logger *slog.Logger) *LLMClient {
-	client := &http.Client{Timeout: config.Timeout}
+	// MaxTokens default setting removed as per user's request for debugging
 	return &LLMClient{
 		config: config,
 		logger: logger,
-		client: client,
+		client: &http.Client{Timeout: config.Timeout},
 	}
 }
 
@@ -79,6 +79,7 @@ type ChatCompletionRequest struct {
 	Tools      []Tool      `json:"tools,omitempty"`
 	ToolChoice interface{} `json:"tool_choice,omitempty"`
 	Stream     bool        `json:"stream,omitempty"`
+	// MaxTokens removed from request struct as per user's request for debugging
 }
 
 // ChatCompletionResponse represents the response body for chat completions.
@@ -116,6 +117,7 @@ func (c *LLMClient) CallChatCompletionWithToolChoice(ctx context.Context, messag
 		Tools:      tools,
 		ToolChoice: toolChoice,
 		Stream:     false,
+		// MaxTokens removed from payload as per user's request for debugging
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal request body: %w", err)
@@ -158,6 +160,7 @@ func (c *LLMClient) StreamChatCompletion(ctx context.Context, messages []Message
 		Messages: messages,
 		Tools:    tools,
 		Stream:   true,
+		// MaxTokens removed from payload as per user's request for debugging
 	})
 	if err != nil {
 		return fmt.Errorf("could not marshal request body: %w", err)
@@ -255,23 +258,4 @@ func GetLLMModelName() string {
 	return modelName
 }
 
-// GetLLMServerURL retrieves the LLM server URL from environment variable or returns default.
-func GetLLMServerURL() string {
-	serverURL := os.Getenv("LLM_SERVER_URL")
-	if serverURL == "" {
-		serverURL = "http://127.0.0.1:8084/v1/chat/completions" // Default server URL
-	}
-	return serverURL
-}
-
-// GetLLMTimeout retrieves the LLM timeout from environment variable or returns default.
-func GetLLMTimeout() time.Duration {
-	timeoutStr := os.Getenv("LLM_TIMEOUT_SECONDS")
-	timeout := 60 * time.Second // Default timeout
-	if timeoutStr != "" {
-		if seconds, err := strconv.Atoi(timeoutStr); err == nil {
-			timeout = time.Duration(seconds) * time.Second
-		}
-	}
-	return timeout
-}
+// GetLLMServer

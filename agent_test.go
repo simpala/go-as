@@ -36,14 +36,16 @@ func TestAgentExecution(t *testing.T) {
 					{
 						Message: Message{
 							Role:    "assistant",
-							Content: "<plan>\n1. List files in the current directory.\n</plan>",
+							Content: `<plan>
+1. List files in the current directory.
+</plan>`,
 							ToolCalls: []ToolCall{
 								{
 									ID:   "call_123",
 									Type: "function",
 									Function: FunctionCall{
 										Name:      "fs.list_directory",
-										Arguments: `{\"path\": \".\"}`,
+										Arguments: `{"path": "."}`,
 									},
 								},
 							},
@@ -53,8 +55,27 @@ func TestAgentExecution(t *testing.T) {
 					},
 				},
 			}
-		} else {
+		} else if strings.Contains(req.Messages[0].Content, "Nexus") {
 			// Phase 2: Nexus (Execution)
+			resp = ChatCompletionResponse{
+				Choices: []struct {
+					Message      Message `json:"message"`
+					FinishReason string  `json:"finish_reason"`
+					Index        int     `json:"index"`
+				}{
+					{
+						Message: Message{
+							Role:    "assistant",
+							Content: "Final answer",
+							ToolCalls: nil,
+						},
+						FinishReason: "stop",
+						Index:        0,
+					},
+				},
+			}
+		} else {
+			// Reconnector phase
 			resp = ChatCompletionResponse{
 				Choices: []struct {
 					Message      Message `json:"message"`
@@ -118,4 +139,56 @@ func TestAgentExecution(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, "Final answer", finalResult)
+}
+
+func TestExtractContentBetweenTags(t *testing.T) {
+	testCases := []struct {
+		name          string
+		text          string
+		startTag      string
+		endTag        string
+		expected      string
+		expectedFound bool
+	}{
+		{
+			name:          "Simple case",
+			text:          "<plan>hello</plan>",
+			startTag:      "<plan>",
+			endTag:        "</plan>",
+			expected:      "hello",
+			expectedFound: true,
+		},
+		{
+			name:          "Case insensitive",
+			text:          "<PLAN>hello</PLAN>",
+			startTag:      "<plan>",
+			endTag:        "</plan>",
+			expected:      "hello",
+			expectedFound: true,
+		},
+		{
+			name:          "With surrounding text",
+			text:          "Here is the plan: <plan>hello</plan>\nThat is all.",
+			startTag:      "<plan>",
+			endTag:        "</plan>",
+			expected:      "hello",			
+			expectedFound: true,
+		},
+		{
+			name:          "No tags",
+			text:          "hello",
+			startTag:      "<plan>",
+			endTag:        "</plan>",
+			expected:      "",
+			expectedFound: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			actual, found := extractContentBetweenTags(tc.text, tc.startTag, tc.endTag)
+			assert.Equal(t, tc.expected, actual)
+			assert.Equal(t, tc.expectedFound, found)
+		})
+	}
 }

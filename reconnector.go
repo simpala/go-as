@@ -19,15 +19,12 @@ func NewReconnector(llmClient *LLMClient) *Reconnector {
 
 // Reconnect takes the conversation history and returns the final response from the LLM.
 func (r *Reconnector) Reconnect(ctx context.Context, history []Message) (string, error) {
-	messages := append(history, Message{
-		Role:    "user",
-		Content: "Please provide a summary or a final answer based on the conversation history.",
-	})
-
-	llmResponse, err := r.llmClient.CallChatCompletionWithToolChoice(ctx, messages, nil, "none")
-	if err != nil {
-		return "", fmt.Errorf("failed to get final response from LLM: %w", err)
+	// Find the last assistant message with content
+	for i := len(history) - 1; i >= 0; i-- {
+		msg := history[i]
+		if msg.Role == "assistant" && msg.Content != "" {
+			return msg.Content, nil
+		}
 	}
-
-	return llmResponse.Choices[0].Message.Content, nil
+	return "", fmt.Errorf("no final answer found in conversation history")
 }
