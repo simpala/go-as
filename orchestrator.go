@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"os"
+	"strconv"
 	"time"
 )
 
@@ -109,12 +111,23 @@ func (o *Orchestrator) ManageMCP(config *MCPConfig) error {
 	return nil
 }
 
-// GetLLMServerURL returns the LLM server URL.
+// GetLLMServerURL retrieves the LLM server URL from environment variable or returns default.
 func GetLLMServerURL() string {
-	return "http://localhost:8080"
+	serverURL := os.Getenv("LLM_SERVER_URL")
+	if serverURL == "" {
+		serverURL = "http://127.0.0.1:8084/v1/chat/completions" // Default server URL
+	}
+	return serverURL
 }
 
-// GetLLMTimeout returns the LLM timeout.
+// GetLLMTimeout retrieves the LLM timeout from environment variable or returns default.
 func GetLLMTimeout() time.Duration {
-	return 5 * time.Second
+	timeoutStr := os.Getenv("LLM_TIMEOUT_SECONDS")
+	timeout := 60 * time.Second // Default timeout
+	if timeoutStr != "" {
+		if seconds, err := strconv.Atoi(timeoutStr); err == nil {
+			timeout = time.Duration(seconds) * time.Second
+		}
+	}
+	return timeout
 }
