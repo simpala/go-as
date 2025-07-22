@@ -53,7 +53,7 @@ import (
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	orchestrator, err := go_has.NewOrchestrator(&go_has.OrchestratorConfig{}, logger)
+	orchestrator, err := go_as.NewOrchestrator(&go_as.OrchestratorConfig{}, logger)
 	if err != nil {
 		logger.Error("failed to create orchestrator", "error", err)
 		os.Exit(1)
@@ -62,7 +62,7 @@ func main() {
 	// Connect to MCP agents here
 	// Example:
 	// filesysMCPExecPath := filepath.Join(wd, "..", "filesys_mcp", "filesys_mcp_exec")
-	// if err := orchestrator.ManageMCP(&go_has.MCPConfig{
+	// if err := orchestrator.ManageMCP(&go_as.MCPConfig{
 	// 	Alias: "fs",
 	// 	Address: filesysMCPExecPath,
 	// }); err != nil {
@@ -70,7 +70,7 @@ func main() {
 	// 	os.Exit(1)
 	// }
 
-	server := go_has.NewServer(orchestrator, logger)
+	server := go_as.NewServer(orchestrator, logger)
 	if err := server.Start(":8080"); err != nil {
 		logger.Error("failed to start server", "error", err)
 		os.Exit(1)
