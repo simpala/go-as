@@ -20,7 +20,6 @@ type LLMClientConfig struct {
 	ServerURL string
 	ModelName string
 	Timeout   time.Duration
-	MaxTokens int // This field is now correctly defined
 }
 
 // Message represents a message in the chat completion.
@@ -65,14 +64,11 @@ type LLMClient struct {
 
 // NewLLMClient creates a new LLMClient.
 func NewLLMClient(config *LLMClientConfig, logger *slog.Logger) *LLMClient {
-	// Set a sensible default if not provided, e.g., 2048 or higher
-	if config.MaxTokens == 0 {
-		config.MaxTokens = 8096 // Or a value suitable for your models/tasks
-	}
+	client := &http.Client{Timeout: config.Timeout}
 	return &LLMClient{
 		config: config,
 		logger: logger,
-		client: &http.Client{Timeout: config.Timeout},
+		client: client,
 	}
 }
 
@@ -83,7 +79,6 @@ type ChatCompletionRequest struct {
 	Tools      []Tool      `json:"tools,omitempty"`
 	ToolChoice interface{} `json:"tool_choice,omitempty"`
 	Stream     bool        `json:"stream,omitempty"`
-	MaxTokens  int         `json:"max_tokens,omitempty"` // Add MaxTokens to the request struct
 }
 
 // ChatCompletionResponse represents the response body for chat completions.
@@ -121,7 +116,6 @@ func (c *LLMClient) CallChatCompletionWithToolChoice(ctx context.Context, messag
 		Tools:      tools,
 		ToolChoice: toolChoice,
 		Stream:     false,
-		MaxTokens:  c.config.MaxTokens, // Include MaxTokens from the client config
 	})
 	if err != nil {
 		return nil, fmt.Errorf("could not marshal request body: %w", err)
@@ -160,11 +154,10 @@ func (c *LLMClient) CallChatCompletionWithToolChoice(ctx context.Context, messag
 // StreamChatCompletion sends a streaming chat completion request to the LLM.
 func (c *LLMClient) StreamChatCompletion(ctx context.Context, messages []Message, tools []Tool, chunkChan chan<- string) error {
 	requestBody, err := json.Marshal(ChatCompletionRequest{
-		Model:     c.config.ModelName,
-		Messages:  messages,
-		Tools:     tools,
-		Stream:    true,
-		MaxTokens: c.config.MaxTokens, // Also include MaxTokens for streaming requests
+		Model:    c.config.ModelName,
+		Messages: messages,
+		Tools:    tools,
+		Stream:   true,
 	})
 	if err != nil {
 		return fmt.Errorf("could not marshal request body: %w", err)
