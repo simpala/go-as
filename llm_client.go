@@ -1,4 +1,4 @@
-package go_has
+package go_as
 
 import (
 	"bufio"
@@ -24,15 +24,15 @@ type LLMClientConfig struct {
 
 // Message represents a message in the chat completion.
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role      string     `json:"role"`
+	Content   string     `json:"content"`
 	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
 }
 
 // ToolCall represents a tool call made by the LLM.
 type ToolCall struct {
-	ID       string `json:"id,omitempty"`
-	Type     string `json:"type"`
+	ID       string       `json:"id,omitempty"`
+	Type     string       `json:"type"`
 	Function FunctionCall `json:"function"`
 }
 
@@ -44,14 +44,14 @@ type FunctionCall struct {
 
 // Tool represents a tool definition for the LLM.
 type Tool struct {
-	Type     string `json:"type"`
+	Type     string       `json:"type"`
 	Function ToolFunction `json:"function"`
 }
 
 // ToolFunction represents the function details of a tool.
 type ToolFunction struct {
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
+	Name        string      `json:"name"`
+	Description string      `json:"description,omitempty"`
 	Parameters  interface{} `json:"parameters"` // JSON Schema
 }
 
@@ -99,7 +99,7 @@ type ChatCompletionStreamChunk struct {
 
 // Delta represents a change in content in a streaming response.
 type Delta struct {
-	Content   string `json:"content"`
+	Content   string     `json:"content"`
 	ToolCalls []ToolCall `json:"tool_calls,omitempty"`
 }
 
